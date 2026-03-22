@@ -122,7 +122,6 @@ jobs:
           rm -rf out
           mkdir -p out
           cp -r docs/* out/
-          cp -r data out/data
           mkdir -p out/notebooks
           cp notebooks/*.html out/notebooks/ || true
           cp notebooks/*.ipynb out/notebooks/ || true

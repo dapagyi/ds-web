@@ -1,0 +1,46 @@
+<script>
+  const getPreferredTheme = () => {
+    const storedTheme = localStorage.getItem("theme");
+    if (!storedTheme || storedTheme === "auto") {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+    return storedTheme;
+  }
+
+  const updateFooterTheme = () => {
+    document.querySelector("footer.footer").setAttribute("data-bs-theme", hasAlternateSentinel() ? "dark" : "light");
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // Wait until Quarto's toggle function exists
+    const interval = setInterval(() => {
+      if (window.quartoToggleColorScheme) {
+        clearInterval(interval);
+
+        const original = window.quartoToggleColorScheme;
+
+        window.quartoToggleColorScheme = function () {
+          // Call Quarto's internal toggle
+          original();
+
+          // Sync to localStorage
+          const dark = hasAlternateSentinel();
+          localStorage.setItem("theme", dark ? "dark" : "light");
+          updateFooterTheme();
+        };
+
+        // On page load, apply stored preference
+        try {
+          const dark = hasAlternateSentinel();
+          if (getPreferredTheme() === "dark" && !dark) {
+            original();
+          }
+          if (getPreferredTheme() === "light" && dark) {
+            original();
+          }
+          updateFooterTheme();
+        } catch { }
+      }
+    }, 20);
+  });
+</script>

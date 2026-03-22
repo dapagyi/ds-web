@@ -1,0 +1,69 @@
+[project]
+name = "ds"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiosqlite>=0.21.0",
+    "altair>=5.4.0",
+    "itables>=2.5.2",
+    "kaggle>=1.7.4.5",
+    "matplotlib>=3.10.6",
+    "numpy>=2.3.2",
+    "pandas>=2.3.2",
+    "plotly>=6.3.0",
+    "python-dotenv>=1.1.1",
+    "scikit-learn>=1.7.2",
+    "seaborn>=0.13.2",
+    "xgboost>=3.0.5",
+]
+
+[dependency-groups]
+dev = ["jupyter>=1.1.1"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    # flake8-2020
+    "YTT",
+    # flake8-bandit
+    "S",
+    # flake8-bugbear
+    "B",
+    # flake8-builtins
+    "A",
+    # flake8-comprehensions
+    "C4",
+    # flake8-debugger
+    "T10",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # mccabe
+    "C90",
+    # pycodestyle
+    "E",
+    "W",
+    # pyflakes
+    "F",
+    # pygrep-hooks
+    "PGH",
+    # pyupgrade
+    "UP",
+    # ruff
+    "RUF",
+    # tryceratops
+    "TRY",
+]
+ignore = [
+    # LineTooLong
+    "E501",
+    # DoNotAssignLambda
+    "E731",
+    # blanket-type-ignore
+    "PGH003",
+]

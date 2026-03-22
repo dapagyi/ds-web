@@ -1,0 +1,180 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[ci skip]') }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            .venv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install Python environment
+        run: |
+          uv sync --all-extras --dev
+          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
+
+      - name: Install Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Cache Quarto
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/quarto
+          key: ${{ runner.os }}-quarto-${{ hashFiles('notebooks/*.qmd') }}
+
+      - name: Cache notebook outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            notebooks/*.html
+            notebooks/*.ipynb
+            notebooks/*_files
+            .notebook-hashes
+          key: notebooks-master-${{ hashFiles('notebooks/*.qmd') }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            notebooks-master-
+
+      - name: Detect changed notebooks
+        id: changed-notebooks
+        run: |
+          mkdir -p .notebook-hashes
+          changed_notebooks=()
+
+          for qmd in notebooks/*.qmd; do
+            notebook=$(basename "$qmd" .qmd)
+            current_hash=$(sha256sum "$qmd" | cut -d' ' -f1)
+            hash_file=".notebook-hashes/${notebook}.hash"
+            
+            if [ -f "$hash_file" ]; then
+              cached_hash=$(cat "$hash_file")
+              if [ "$current_hash" = "$cached_hash" ]; then
+                html="${qmd%.qmd}.html"
+                if [ -f "$html" ]; then
+                  echo "✓ Cached: $notebook"
+                  continue
+                fi
+              fi
+            fi
+            
+            echo "⚠ Changed: $notebook"
+            changed_notebooks+=("$qmd")
+            echo "$current_hash" > "$hash_file"
+          done
+
+          if [ ${#changed_notebooks[@]} -eq 0 ]; then
+            echo "render_needed=false" >> $GITHUB_OUTPUT
+            echo "✓ All 16 notebooks cached!"
+          else
+            echo "render_needed=true" >> $GITHUB_OUTPUT
+            printf '%s\n' "${changed_notebooks[@]}" > .notebooks-to-render
+            echo "⚠ Will render ${#changed_notebooks[@]} of 16 notebooks"
+          fi
+
+      - name: Render changed notebooks (parallel)
+        if: steps.changed-notebooks.outputs.render_needed == 'true'
+        run: |
+          cat .notebooks-to-render | tr '\n' '\0' | \
+            xargs -0 -P $(nproc) -I {} \
+            bash -c 'echo "::group::Rendering {}" && QUARTO_PROFILE="solutions" uv run quarto render "{}" ; STATUS=$? ; echo "::endgroup::" ; exit $STATUS'
+
+      - name: Prepare publish directory
+        run: |
+          rm -rf out
+          mkdir -p out
+          cp -r docs/* out/
+          cp -r data out/data
+          mkdir -p out/notebooks
+          cp notebooks/*.html out/notebooks/ || true
+          cp notebooks/*.ipynb out/notebooks/ || true
+          mkdir -p out/notebooks/partials
+          cp notebooks/partials/styles.css out/notebooks/partials/styles.css || true
+          for d in notebooks/*_files; do
+            [ -d "$d" ] && cp -r "$d" out/notebooks/;
+          done
+
+      - name: Verify lib files
+        run: |
+          set -e
+          chmod +x scripts/verify-libs.sh
+          scripts/verify-libs.sh out/notebooks
+
+      - name: Merge lib files
+        run: |
+          set -e
+          chmod +x scripts/merge-libs.sh
+          scripts/merge-libs.sh out/notebooks
+
+      - name: Prepare notebooks for Colab
+        run: |
+          mkdir -p notebooks-only
+          cp out/notebooks/*.ipynb notebooks-only/ || true
+
+      - name: Deploy notebooks for Colab
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./notebooks-only
+          publish_branch: notebooks
+          force_orphan: true
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./out"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Deploy via SFTP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: caesar.elte.hu
+          username: apagyidavid
+          password: ${{ secrets.SFTP_PASSWORD }}
+          source: "./out/*"
+          target: "/afs/elte.hu/user/a/apagyidavid/web/2025-2026-2/ds"
+          strip_components: 1

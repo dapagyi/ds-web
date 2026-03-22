@@ -1,0 +1,16 @@
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+footer.footer {
+    margin-top: auto;
+}
+
+h1 code,
+h2 code,
+h3 code,
+dl.code-annotation-container-grid dd span code {
+    background-color: rgba(233, 236, 239, .1) !important;
+}

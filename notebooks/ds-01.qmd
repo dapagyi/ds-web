@@ -1,0 +1,40 @@
+---
+title: "DS-01"
+subtitle: "Kurzusinformációk; módszertan; $k$-means algoritmus; `numpy`, `pandas`, `matplotlib`, `seaborn`, `polars` gyakorlás."
+# author: "Apagyi Dávid"
+date: "2026-03-24"
+title-block-banner: true
+lightbox: true
+format:
+  html:
+    grid: 
+      margin-width: 300px
+    html-math-method: katex
+    include-in-header:
+      - file: partials/analytics.html
+    include-after-body:
+      - file: partials/sync-dark-mode.html
+      - file: partials/footer.html
+    css: partials/styles.css
+    respect-user-color-scheme: true
+    code-links: 
+      - repo
+  ipynb: default
+execute:
+  echo: true
+toc: true
+reference-location: margin
+citation-location: margin
+theme:
+  light: default
+  dark: [default, partials/dark-mode.scss]
+---
+__Honlap:__ [apagyidavid.web.elte.hu/2025-2026-2/ds](https://apagyidavid.web.elte.hu/2025-2026-2/ds){target="_blank"}
+
+<a target="_blank" href="https://colab.research.google.com/github/dapagyi/ds-web/blob/notebooks/ds-01.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+
+# Hello World
+
+```{python}
+print("Hello, world!")
+```

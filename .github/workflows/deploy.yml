@@ -103,11 +103,11 @@ jobs:
 
           if [ ${#changed_notebooks[@]} -eq 0 ]; then
             echo "render_needed=false" >> $GITHUB_OUTPUT
-            echo "✓ All 16 notebooks cached!"
+            echo "✓ All notebooks cached!"
           else
             echo "render_needed=true" >> $GITHUB_OUTPUT
             printf '%s\n' "${changed_notebooks[@]}" > .notebooks-to-render
-            echo "⚠ Will render ${#changed_notebooks[@]} of 16 notebooks"
+            echo "⚠ Will render ${#changed_notebooks[@]} notebooks"
           fi
 
       - name: Render changed notebooks (parallel)

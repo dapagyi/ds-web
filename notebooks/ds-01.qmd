@@ -676,7 +676,7 @@ plt.show()
 
 # Homework
 
-Check <span class="badge text-bg-warning me-1">HW/1</span><a href="./ds-hw-01" target="_blank">Clustering</a> for details.
+Check <span class="badge text-bg-warning me-1">HW/1</span><a href="https://apagyidavid.web.elte.hu/2025-2026-2/ds/notebooks/ds-hw-01" target="_blank">Clustering</a> for details.
 
 __Deadline:__ 2026. 04. 09. 23:59
 
